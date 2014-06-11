@@ -6,7 +6,6 @@ package main
 import "C"
 import (
 	"encoding/json"
-	"fmt"
 	"unsafe"
 )
 
@@ -22,13 +21,11 @@ func RunV8(script string, result interface{}) error {
 
 	jsonstr := C.GoString(rcstr)
 
-	fmt.Printf("Runv8 json -> %s\n", jsonstr)
 	// unmarshal result
 	err := json.Unmarshal([]byte(jsonstr), result)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Runv8 Result -> %T: %#+v\n", result, result)
 	return nil
 }
