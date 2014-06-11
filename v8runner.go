@@ -1,12 +1,16 @@
 package main
 
-// #cgo LDFLAGS: -L. -lv8wrapper -lv8  -lstdc++ -pthread
+// #cgo LDFLAGS: -L. -lv8wrapper -lv8  -lstdc++
 // #include <stdlib.h>
 // #include "v8wrapper.h"
 import "C"
-import "unsafe"
+import (
+	"encoding/json"
+	"fmt"
+	"unsafe"
+)
 
-func RunV8(script string) string {
+func RunV8(script string, result interface{}) error {
 
 	// convert Go string to nul terminated C-string
 	cstr := C.CString(script)
@@ -16,5 +20,15 @@ func RunV8(script string) string {
 	rcstr := C.runv8(cstr)
 	defer C.free(unsafe.Pointer(rcstr))
 
-	return C.GoString(rcstr)
+	jsonstr := C.GoString(rcstr)
+
+	fmt.Printf("Runv8 json -> %s\n", jsonstr)
+	// unmarshal result
+	err := json.Unmarshal([]byte(jsonstr), result)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Runv8 Result -> %T: %#+v\n", result, result)
+	return nil
 }

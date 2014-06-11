@@ -4,9 +4,21 @@
 // Hello,  C++ + JavaScript World! - Boost.勉強会 #11 東京 http://www.slideshare.net/hecomi/hello-cppandjsworld
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 func main() {
-	r := RunV8("'Hello Go World'")
-	fmt.Println(r)
+
+	script, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Printf("error : %v\n", err)
+	}
+
+	var result interface{}
+	RunV8(string(script), &result)
+	fmt.Printf("Result -> %T: %#+v\n", result, result)
+
 }

@@ -3,39 +3,43 @@
 
 #include "v8wrapper.h"
 
+using namespace v8;
 
 char * runv8(const char *jssrc)
 {
+    // Get the default Isolate created at startup.
+    Isolate* isolate = Isolate::GetCurrent();
 
-    v8::Isolate* isolate = v8::Isolate::New();
+    // Create a stack-allocated handle scope.
+    HandleScope handle_scope(isolate);
 
-    v8::Handle<v8::Value> result;
-    {
-        v8::Isolate::Scope isolate_scope(isolate);
+    // Create a new context.
+    Handle<Context> context = Context::New(isolate);
 
-        // Create a stack-allocated handle scope.
-        v8::HandleScope handle_scope(isolate);
+    // Enter the context for compiling and running the hello world script.
+    Context::Scope context_scope(context);
 
-        v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
+    // Create a string containing the JavaScript source code.
+    Handle<String> source = String::New(jssrc);
 
-        v8::Handle<v8::Context> context = v8::Context::New(isolate, NULL, global);
+    // Compile the source code.
+    Handle<Script> script = Script::Compile(source);
 
-        // Enter the created context for compiling and
-        // running the script.
-        v8::Context::Scope context_scope(context);
+    // Run the script to get the result.
+    Handle<Value> result = script->Run();
 
-        // Create a string containing the JavaScript source code.
-        v8::Handle<v8::String> source = v8::String::New(jssrc);
+    // The JSON.stringify function object
+    Handle<Object> global = context->Global();
+    Handle<Object> JSON = global->Get(String::New("JSON"))->ToObject();
+    Handle<Function> JSON_stringify = Handle<Function>::Cast(JSON->Get(String::New("stringify")));
 
-        // Compile the source code.
-        v8::Handle<v8::Script> script = v8::Script::Compile(source);
+    Handle<Value> args[] = { result };
+    // stringify result
+    Local<Value> json = JSON_stringify->Call(JSON, 1, args);
 
-        // Run the script
-        result = script->Run();
-    }
+    // Convert the result to an UTF8 string and print it.
+    String::Utf8Value utf8(json);
 
     // return result as string, must be deallocated in cgo wrapper
-    v8::String::AsciiValue ascii(result);
-    return strdup(*ascii);
-
+    return strdup(*utf8);
 }
